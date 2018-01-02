@@ -1,10 +1,14 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+# MatPlotLib Configuration
+import PyQt5
+get_ipython().magic('matplotlib qt')
 from matplotlib import style;  style.use('ggplot')
-from scipy.spatial.distance import euclidean
-import numpy.matlib
+# Import Crucial Libraries
 import numpy as np
+import numpy.matlib
+import pandas as pd
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+from scipy.spatial.distance import euclidean
 
 
 def addOneHot(df):
@@ -78,7 +82,7 @@ class BSAS:
     def __findOptimalCluster(self, clusters):
         clusters_frq = {}
         min_cluster = np.min(clusters)
-        for cluster in tqdm_notebook(clusters, desc='Finding Optimal Cluster...'):
+        for cluster in tqdm(clusters, desc='Finding Optimal Cluster...'):
             if (cluster == min_cluster):
                 continue
             try:
@@ -164,19 +168,27 @@ class BSAS:
         n_theta = 50
         s = (theta_max - theta_min)/(n_theta - 1)
         
-        total_clusters = []
-        total_theta = np.arange(theta_min, theta_max+s, s)
-        for theta in tqdm(total_theta, desc=('Running BSAS...')):
-            max_clusters = -np.inf
-            for i in np.arange(n_times):
-                clf = BSAS(theta=theta,q=l)
-                order = np.random.permutation(range(l))
-                clf.fit(data, order)
-                clusters, centroids = clf.predict()
-                clustersN = len(clusters)
-                if (clustersN > max_clusters):
-                    max_clusters = clustersN
-            total_clusters = total_clusters + [max_clusters]
+        if (first_time):
+            total_clusters = []
+            total_theta = np.arange(theta_min, theta_max+s, s)
+            for theta in tqdm(total_theta, desc=('Running BSAS...')):
+                max_clusters = -np.inf
+                for i in np.arange(n_times):
+                    clf = BSAS(theta=theta,q=l)
+                    order = np.random.permutation(range(l))
+                    clf.fit(data, order)
+                    clusters, centroids = clf.predict()
+                    clustersN = len(clusters)
+                    if (clustersN > max_clusters):
+                        max_clusters = clustersN
+                total_clusters = total_clusters + [max_clusters]
+        
+            np.save('total_clusters.npy', np.array(total_clusters, dtype=np.int))
+            np.save('total_theta.npy', np.array(total_theta, dtype=np.float))
+        else:
+            total_clusters = np.load('total_clusters.npy')
+            total_theta = np.load('total_theta.npy')
+        
         
         if (plot_graph==True):
             plt.plot(total_theta, total_clusters, 'b-') 
